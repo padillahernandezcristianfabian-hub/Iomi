@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Zenit System PRO</title>
+
+	<style>
+		body { margin:0; font-family: Segoe UI, system-ui, -apple-system, Arial; background:#0f172a; color:white; }
+		header { background:#1e293b; padding:12px; text-align:center; font-weight:bold; }
+		nav { display:flex; overflow-x:auto; background:#020617; position: sticky; top: 0; z-index: 5; }
+		nav button { flex:1; padding:10px; background:none; color:white; border:none; cursor:pointer; }
+		nav button.active { background:#22c55e; color:#052e16; font-weight:800; }
+		.container { padding:10px; }
+		.card { background:#1e293b; padding:12px; border-radius:12px; margin-bottom:10px; }
+		input, textarea, select { width:100%; padding:8px; border-radius:8px; border:none; margin-top:5px; box-sizing:border-box; }
+		textarea { min-height: 90px; resize: vertical; }
+		button.action { background:#22c55e; border:none; padding:10px; border-radius:8px; width:100%; margin-top:8px; cursor:pointer; font-weight:800; color:#052e16; }
+		button.secondary { background:#334155; color:white; }
+		button.danger { background:#ef4444; color:white; }
+		.row { display:flex; gap:8px; }
+		.row > * { flex:1; }
+		.task { display:flex; gap:10px; align-items:center; justify-content:space-between; background:#334155; padding:8px; border-radius:8px; margin-top:8px; }
+		.task .text { flex: 1; }
+		.task.done { text-decoration:line-through; opacity:0.75; }
+		.task button { border:none; background:#22c55e; color:#052e16; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:900; }
+		.xpbar { background:#334155; height:10px; border-radius:10px; overflow:hidden; }
+		.xpfill { height:10px; background:#22c55e; width:0%; }
+		img { width:100%; border-radius:10px; display:block; margin-top:8px; }
+		video { width:100%; border-radius:10px; margin-top:8px; display:block; background:#0b1220; }
+		.small { opacity: .85; font-size: 12px; margin-top: 6px; line-height: 1.35; }
+		hr { border: none; border-top: 1px solid #334155; margin: 12px 0; }
+		.badge { display:inline-block; background:#0b1220; padding:6px 10px; border-radius:999px; margin: 6px 6px 0 0; font-size: 12px; opacity: .95; }
+		.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+	</style>
+</head>
+
+<body>
+	<header>🚀 Zenit System PRO</header>
+
+	<nav>
+		<button data-tab="home" class="active">Inicio</button>
+		<button data-tab="tasks">Tareas</button>
+		<button data-tab="ai">IA</button>
+		<button data-tab="money">Dinero</button>
+		<button data-tab="media">Media</button>
+		<button data-tab="community">Comunidad</button>
+		<button data-tab="data">Datos</button>
+	</nav>
+
+	<div class="container">
+		<!-- HOME -->
+		<div id="home" class="card">
+			<h3>Marca</h3>
+			<input type="file" id="logoInput" accept="image/*" />
+			<img id="logoView" alt="Logo" />
+
+			<hr>
+
+			<h3>Nivel</h3>
+			<p id="nivel"></p>
+			<div class="xpbar"><div id="xp" class="xpfill"></div></div>
+
+			<div id="stats" style="margin-top:10px;">
+				<span class="badge" id="statTasks"></span>
+				<span class="badge" id="statDone"></span>
+				<span class="badge" id="statXP"></span>
+			</div>
+
+			<div class="small">Completa tareas para subir XP. Tus datos se guardan en este navegador (localStorage).</div>
+		</div>
+
+		<!-- TASKS -->
+		<div id="tasks" class="card" style="display:none">
+			<h3>Tareas</h3>
+			<input id="taskInput" placeholder="Escribe una tarea..." />
+			<div class="row">
+				<button class="action" id="addTaskBtn">Agregar</button>
+				<button class="action secondary" id="clearDoneBtn">Borrar hechas</button>
+			</div>
+			<div id="list"></div>
+		</div>
+
+		<!-- AI -->
+		<div id="ai" class="card" style="display:none">
+			<h3>IA</h3>
+			<textarea id="aiInput" placeholder="Escribe tu pregunta... (ej: disciplina, dinero)"></textarea>
+			<button class="action" id="aiBtn">Responder</button>
+			<p id="aiOut"></p>
+			<div class="row">
+				<button class="action secondary" id="openAiBtn">Abrir ChatGPT</button>
+				<button class="action secondary" id="openGeminiBtn">Abrir Gemini</button>
+			</div>
+			<div class="small">Esta IA es local (respuestas rápidas por palabras clave). No envía datos a internet.</div>
+		</div>
+
+		<!-- MONEY -->
+		<div id="money" class="card" style="display:none">
+			<h3>Ingresos</h3>
+
+			<div class="small">Misión actual:</div>
+			<p id="mission" style="font-weight:800; font-size:18px; margin-top:6px;"></p>
+			<div class="small" id="missionWhen"></div>
+
+			<hr>
+
+			<h4>Programar misión (hora legible)</h4>
+			<label class="small">Fecha y hora</label>
+			<input id="missionDT" type="datetime-local" />
+
+			<div class="row">
+				<div>
+					<label class="small">Duración (min)</label>
+					<input id="missionDur" type="number" min="5" max="240" value="30" />
+				</div>
+				<div>
+					<label class="small">Recordatorio</label>
+					<select id="missionReminder">
+						<option value="0">Sin recordatorio</option>
+						<option value="5">5 min antes</option>
+						<option value="10">10 min antes</option>
+						<option value="15">15 min antes</option>
+						<option value="30">30 min antes</option>
+						<option value="60">1 hora antes</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="row">
+				<button class="action" id="newMissionBtn">Nueva misión</button>
+				<button class="action secondary" id="copyMissionBtn">Copiar misión</button>
+			</div>
+
+			<div class="row">
+				<button class="action" id="calendarBtn">Descargar .ics</button>
+				<button class="action secondary" id="saveMissionBtn">Guardar en historial</button>
+			</div>
+
+			<hr>
+
+			<h4>Historial</h4>
+			<div id="missionHistory"></div>
+		</div>
+
+		<!-- MEDIA -->
+		<div id="media" class="card" style="display:none">
+			<h3>Videos</h3>
+			<input type="file" id="videoInput" accept="video/*" />
+			<div id="videos"></div>
+		</div>
+
+		<!-- COMMUNITY -->
+		<div id="community" class="card" style="display:none">
+			<h3>Comunidad</h3>
+			<textarea id="postInput" placeholder="Escribe un post..."></textarea>
+			<button class="action" id="postBtn">Publicar</button>
+			<div id="feed"></div>
+		</div>
+
+		<!-- DATA -->
+		<div id="data" class="card" style="display:none">
+			<h3>Datos (Exportar / Importar)</h3>
+
+			<div class="row">
+				<button class="action" id="exportBtn">Exportar respaldo (.json)</button>
+				<button class="action danger" id="resetBtn">Reiniciar TODO</button>
+			</div>
+
+			<hr>
+
+			<h4>Importar</h4>
+			<div class="small">Pega aquí un JSON exportado. Esto reemplaza tus datos actuales.</div>
+			<textarea id="importBox" class="mono" placeholder='{"xp":0,"tasks":[],"feed":[],"mission":"","missionWhen":"","missionHistory":[],"logo":null}'></textarea>
+			<button class="action" id="importBtn">Importar ahora</button>
+		</div>
+	</div>
+
+	<script>
+		// ---------- Utilidades ----------
+		const $ = (id) => document.getElementById(id);
+
+		function safeParseJSON(str, fallback) {
+			try { return JSON.parse(str); } catch { return fallback; }
+		}
+
+		function cleanText(text) {
+			return String(text || "")
+				.replace(/[\u0000-\u001F\u007F]/g, "")
+				.trim()
+				.slice(0, 300);
+		}
+
+		function formatDateTimeLocal(dt) {
+			// dt = Date
+			try {
+				return new Intl.DateTimeFormat("es-MX", {
+					weekday: "short",
+					year: "numeric",
+					month: "short",
+					day: "2-digit",
+					hour: "2-digit",
+					minute: "2-digit"
+				}).format(dt);
+			} catch {
+				return dt.toLocaleString();
+			}
+		}
+
+		// ---------- Tabs ----------
+		function tab(id) {
+			document.querySelectorAll(".card").forEach(e => e.style.display = "none");
+			const el = $(id);
+			if (el) el.style.display = "block";
+
+			document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+			const btn = document.querySelector(`nav button[data-tab="${id}"]`);
+			if (btn) btn.classList.add("active");
+
+			localStorage.setItem("activeTab", id);
+		}
+
+		document.querySelectorAll("nav button").forEach(btn => {
+			btn.addEventListener("click", () => tab(btn.dataset.tab));
+		});
+
+		// ---------- Datos base ----------
+		function getTasks() { return safeParseJSON(localStorage.getItem("tasks") || "[]", []); }
+		function setTasks(tasks) { localStorage.setItem("tasks", JSON.stringify(tasks)); }
+
+		function getFeed() { return safeParseJSON(localStorage.getItem("feed") || "[]", []); }
+		function setFeed(arr) { localStorage.setItem("feed", JSON.stringify(arr)); }
+
+		function getMissionHistory() { return safeParseJSON(localStorage.getItem("missionHistory") || "[]", []); }
+		function setMissionHistory(arr) { localStorage.setItem("missionHistory", JSON.stringify(arr)); }
+
+		// ---------- XP + Stats ----------
+		let xp = Number(localStorage.getItem("xp") || 0) || 0;
+
+		function updateXP() {
+			const lvl = Math.floor(xp / 10);
+			$("nivel").textContent = "Nivel " + lvl;
+			$("xp").style.width = ((xp % 10) * 10) + "%";
+			localStorage.setItem("xp", String(xp));
+			updateStats();
+		}
+
+		function updateStats() {
+			const tasks = getTasks();
+			const done = tasks.filter(t => t.done).length;
+			$("statTasks").textContent = "Tareas: " + tasks.length;
+			$("statDone").textContent = "Hechas: " + done;
+			$("statXP").textContent = "XP: " + xp + " (Nivel " + Math.floor(xp/10) + ")";
+		}
+
+		// ---------- Tareas ----------
+		function addTask() {
+			const input = $("taskInput");
+			const t = cleanText(input.value);
+			if (!t) return;
+
+			const tasks = getTasks();
+			tasks.push({ t, done: false, createdAt: Date.now() });
+			setTasks(tasks);
+
+			input.value = "";
+			loadTasks();
+			updateStats();
+		}
+
+		function toggleTask(i) {
+			const tasks = getTasks();
+			if (!tasks[i]) return;
+
+			tasks[i].done = !tasks[i].done;
+			if (tasks[i].done) xp++;
+
+			setTasks(tasks);
+			updateXP();
+			loadTasks();
+		}
+
+		function clearDoneTasks() {
+			const tasks = getTasks().filter(t => !t.done);
+			setTasks(tasks);
+			loadTasks();
+			updateStats();
+		}
+
+		function loadTasks() {
+			const list = $("list");
+			list.innerHTML = "";
+
+			const tasks = getTasks();
+			tasks.forEach((item, i) => {
+				const row = document.createElement("div");
+				row.className = "task" + (item.done ? " done" : "");
+
+				const text = document.createElement("div");
+				text.className = "text";
+				text.textContent = item.t;
+
+				const btn = document.createElement("button");
+				btn.type = "button";
+				btn.textContent = "✔";
+				btn.addEventListener("click", () => toggleTask(i));
+
+				row.appendChild(text);
+				row.appendChild(btn);
+				list.appendChild(row);
+			});
+		}
+
+		$("addTaskBtn").addEventListener("click", addTask);
+		$("clearDoneBtn").addEventListener("click", clearDoneTasks);
+		$("taskInput").addEventListener("keydown", (e) => { if (e.key === "Enter") addTask(); });
+
+		// ---------- IA local ----------
+		function ai() {
+			const q = ($("aiInput").value || "").toLowerCase();
+			let r = "Actúa hoy: elige 1 tarea, pon temporizador 25 minutos, y termínala.";
+			if (q.includes("dinero")) r = "Dinero: hoy haz 1 acción de venta. Escribe a 5 prospectos o publica una oferta clara con precio y entrega.";
+			if (q.includes("disciplina")) r = "Disciplina: apaga notificaciones 60 minutos. Solo una meta. Si aparece distracción, anótala y regresa.";
+			if (q.includes("tiempo")) r = "Tiempo: bloquea 2 sesiones de 25 minutos. 5 minutos de descanso. Repite.";
+			$("aiOut").textContent = r;
+		}
+		$("aiBtn").addEventListener("click", ai);
+
+		$("openAiBtn").addEventListener("click", () => window.open("https://chat.openai.com", "_blank", "noopener,noreferrer"));
+		$("openGeminiBtn").addEventListener("click", () => window.open("https://gemini.google.com", "_blank", "noopener,noreferrer"));
+
+		// ---------- Misiones ----------
+		const missionPool = [
+			"Vender producto",
+			"Publicar video",
+			"Buscar cliente",
+			"Escribir oferta (copy) de 10 líneas",
+			"Enviar 10 mensajes de prospección",
+			"Subir 1 testimonio (captura o video)",
+			"Optimizar perfil (bio + CTA)",
+			"Publicar 1 carrusel con llamada a la acción"
+		];
+
+		function setMission(text, whenISO) {
+			localStorage.setItem("mission", text);
+			localStorage.setItem("missionWhen", whenISO || "");
+			renderMission();
+		}
+
+		function renderMission() {
+			const m = localStorage.getItem("mission") || "";
+			const whenISO = localStorage.getItem("missionWhen") || "";
+
+			$("mission").textContent = m || "Aún no hay misión. Genera una nueva.";
+			if (whenISO) {
+				const dt = new Date(whenISO);
+				$("missionWhen").textContent = "Programada: " + formatDateTimeLocal(dt);
+			} else {
+				$("missionWhen").textContent = "";
+			}
+		}
+
+		function missionNew() {
+			const pick = missionPool[(Math.random() * missionPool.length) | 0];
+
+			// Si el usuario eligió fecha/hora, úsala. Si no, usa "ahora".
+			const dtVal = $("missionDT").value;
+			const whenISO = dtVal ? new Date(dtVal).toISOString() : new Date().toISOString();
+
+			setMission(pick, whenISO);
+		}
+
+		function copyMission() {
+			const m = localStorage.getItem("mission") || "";
+			const whenISO = localStorage.getItem("missionWhen") || "";
+			const whenText = whenISO ? formatDateTimeLocal(new Date(whenISO)) : "sin hora";
+
+			const text = `Zenit Misión: ${m}\nHora: ${whenText}`;
+			navigator.clipboard?.writeText(text).then(() => {
+				alert("Misión copiada.");
+			}).catch(() => {
+				// fallback
+				prompt("Copia esto:", text);
+			});
+		}
+
+		function saveMissionToHistory() {
+			const m = localStorage.getItem("mission") || "";
+			const whenISO = localStorage.getItem("missionWhen") || "";
+			if (!m) return;
+
+			const history = getMissionHistory();
+			history.unshift({ mission: m, whenISO, savedAt: new Date().toISOString() });
+			setMissionHistory(history.slice(0, 50)); // límite 50
+			loadMissionHistory();
+		}
+
+		function loadMissionHistory() {
+			const box = $("missionHistory");
+			box.innerHTML = "";
+
+			const history = getMissionHistory();
+			if (history.length === 0) {
+				const p = document.createElement("div");
+				p.className = "small";
+				p.textContent = "Sin historial todavía.";
+				box.appendChild(p);
+				return;
+			}
+
+			history.forEach((h, idx) => {
+				const d = document.createElement("div");
+				d.className = "task";
+				const left = document.createElement("div");
+				left.className = "text";
+				const whenText = h.whenISO ? formatDateTimeLocal(new Date(h.whenISO)) : "sin hora";
+				left.textContent = `${h.mission} — ${whenText}`;
+
+				const btn = document.createElement("button");
+				btn.textContent = "Usar";
+				btn.addEventListener("click", () => setMission(h.mission, h.whenISO || ""));
+
+				d.appendChild(left);
+				d.appendChild(btn);
+				box.appendChild(d);
+			});
+		}
+
+		$("newMissionBtn").addEventListener("click", missionNew);
+		$("copyMissionBtn").addEventListener("click", copyMission);
+		$("saveMissionBtn").addEventListener("click", saveMissionToHistory);
+
+		// ---------- Calendario ICS ----------
+		function pad2(n) { return String(n).padStart(2, "0"); }
+		function toICSDateUTC(date) {
+			return date.getUTCFullYear()
+				+ pad2(date.getUTCMonth() + 1)
+				+ pad2(date.getUTCDate())
+				+ "T"
+				+ pad2(date.getUTCHours())
+				+ pad2(date.getUTCMinutes())
+				+ pad2(date.getUTCSeconds())
+				+ "Z";
+		}
+
+		function calendarDownload() {
+			const summary = "Zenit Misión";
+			const desc = cleanText(localStorage.getItem("mission") || "Misión Zenit");
+			const whenISO = localStorage.getItem("missionWhen") || new Date().toISOString();
+			const start = new Date(whenISO);
+
+			const durMin = Math.max(5, Math.min(240, Number($("missionDur").value || 30) || 30));
+			const end = new Date(start.getTime() + durMin * 60 * 1000);
+
+			const reminderMin = Number($("missionReminder").value || 0) || 0;
+
+			const uid = "zenit-" + Math.random().toString(16).slice(2) + "@local";
+			const dtstamp = toICSDateUTC(new Date());
+
+			let alarmBlock = "";
+			if (reminderMin > 0) {
+				alarmBlock =
+`BEGIN:VALARM
+TRIGGER:-PT${reminderMin}M
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio - Zenit Misión
+END:VALARM`;
+			}
+
+			const ics =
+`BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Zenit//Zenit System PRO//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${dtstamp}
+DTSTART:${toICSDateUTC(start)}
+DTEND:${toICSDateUTC(end)}
+SUMMARY:${summary}
+DESCRIPTION:${desc}
+${alarmBlock}
+END:VEVENT
+END:VCALENDAR`;
+
+			const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+			const a = document.createElement("a");
+			a.href = URL.createObjectURL(blob);
+			a.download = "zenit-mision.ics";
+			a.click();
+			URL.revokeObjectURL(a.href);
+		}
+
+		$("calendarBtn").addEventListener("click", calendarDownload);
+
+		// ---------- Videos ----------
+		$("videoInput").addEventListener("change", () => {
+			const input = $("videoInput");
+			const file = input.files && input.files[0];
+			if (!file) return;
+
+			const url = URL.createObjectURL(file);
+			const v = document.createElement("video");
+			v.src = url;
+			v.controls = true;
+			$("videos").appendChild(v);
+			input.value = "";
+		});
+
+		// ---------- Comunidad ----------
+		function post() {
+			const p = cleanText($("postInput").value);
+			if (!p) return;
+
+			const arr = getFeed();
+			arr.push({ text: p, at: new Date().toISOString() });
+			setFeed(arr);
+
+			$("postInput").value = "";
+			loadFeed();
+		}
+
+		function loadFeed() {
+			const feed = $("feed");
+			feed.innerHTML = "";
+
+			const arr = getFeed();
+			arr.slice().reverse().forEach(item => {
+				const d = document.createElement("div");
+				d.className = "task";
+
+				const left = document.createElement("div");
+				left.className = "text";
+				const when = item.at ? formatDateTimeLocal(new Date(item.at)) : "";
+				left.textContent = when ? `${item.text} — ${when}` : item.text;
+
+				d.appendChild(left);
+				feed.appendChild(d);
+			});
+		}
+
+		$("postBtn").addEventListener("click", post);
+
+		// ---------- Logo ----------
+		$("logoInput").addEventListener("change", (e) => {
+			const file = e.target.files && e.target.files[0];
+			if (!file) return;
+
+			const r = new FileReader();
+			r.onload = () => {
+				$("logoView").src = r.result;
+				localStorage.setItem("logo", r.result);
+			};
+			r.readAsDataURL(file);
+
+			e.target.value = "";
+		});
+
+		// ---------- Exportar / Importar ----------
+		function exportData() {
+			const data = {
+				version: "zenit-pro-1.0",
+				exportedAt: new Date().toISOString(),
+				xp: Number(localStorage.getItem("xp") || 0) || 0,
+				tasks: getTasks(),
+				feed: getFeed(),
+				mission: localStorage.getItem("mission") || "",
+				missionWhen: localStorage.getItem("missionWhen") || "",
+				missionHistory: getMissionHistory(),
+				logo: localStorage.getItem("logo") || null
+			};
+
+			const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+			const a = document.createElement("a");
+			a.href = URL.createObjectURL(blob);
+			a.download = "zenit-backup.json";
+			a.click();
+			URL.revokeObjectURL(a.href);
+		}
+
+		function importData() {
+			const text = $("importBox").value;
+			const obj = safeParseJSON(text, null);
+			if (!obj || typeof obj !== "object") {
+				alert("JSON inválido.");
+				return;
+			}
+
+			// Reemplazar datos (con defaults)
+			localStorage.setItem("xp", String(Number(obj.xp || 0) || 0));
+			localStora
